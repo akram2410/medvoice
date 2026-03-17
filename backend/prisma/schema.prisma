@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Doctor {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String
+  firstName   String
+  lastName    String
+  specialty   String    @default("General Practice")
+  licenseNo   String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  visits      Visit[]
+  auditLogs   AuditLog[]
+
+  @@map("doctors")
+}
+
+model Patient {
+  id          String    @id @default(cuid())
+  firstName   String
+  lastName    String
+  dateOfBirth DateTime
+  gender      String
+  bloodType   String    @default("Unknown")
+  healthCard  String    @unique
+  phone       String?
+  allergies   String    @default("None known")
+  conditions  String    @default("None recorded")
+  emergContact String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  visits      Visit[]
+
+  @@map("patients")
+}
+
+model Visit {
+  id          String      @id @default(cuid())
+  patientId   String
+  doctorId    String
+  date        DateTime    @default(now())
+  rawNote     String      @db.Text
+  audioUrl    String?
+  status      VisitStatus @default(DRAFT)
+  signedAt    DateTime?
+  report      Report?
+  patient     Patient     @relation(fields: [patientId], references: [id])
+  doctor      Doctor      @relation(fields: [doctorId], references: [id])
+  auditLogs   AuditLog[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("visits")
+}
+
+model Report {
+  id                     String  @id @default(cuid())
+  visitId                String  @unique
+  diagnosis              String
+  summary                String  @db.Text
+  chiefComplaint         String  @db.Text
+  historyOfPresentIllness String @db.Text
+  physicalExamination    String  @db.Text
+  assessment             String  @db.Text
+  plan                   String  @db.Text
+  visit                  Visit   @relation(fields: [visitId], references: [id])
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@map("reports")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  doctorId  String
+  visitId   String?
+  action    String
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  visit     Visit?   @relation(fields: [visitId], references: [id])
+
+  @@map("audit_logs")
+}
+
+enum VisitStatus {
+  DRAFT
+  SIGNED
+}
