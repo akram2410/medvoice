@@ -15,10 +15,12 @@ model Doctor {
   lastName    String
   specialty   String    @default("General Practice")
   licenseNo   String    @unique
+  role        Role      @default(DOCTOR)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   visits      Visit[]
   auditLogs   AuditLog[]
+  resetTokens PasswordResetToken[]
 
   @@map("doctors")
 }
@@ -92,7 +94,25 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  doctorId  String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+
+  @@map("password_reset_tokens")
+}
+
 enum VisitStatus {
   DRAFT
   SIGNED
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  RECEPTIONIST
 }

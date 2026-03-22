@@ -18,6 +18,8 @@ export function ReportPage() {
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [signing, setSigning] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
@@ -44,6 +46,18 @@ export function ReportPage() {
     } catch (err: any) {
       setMsg(err.message);
     } finally { setSaving(false); }
+  }
+
+  async function deleteDraft() {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await api.deleteVisit(id);
+      navigate(patient ? `/patients/${patient.id}` : '/reports');
+    } catch (err: any) {
+      setMsg(err.message);
+      setDeleting(false);
+    }
   }
 
   async function signReport() {
@@ -147,6 +161,35 @@ export function ReportPage() {
                 <button onClick={saveDraft} disabled={saving} className="btn-secondary w-full">
                   {saving ? 'Saving...' : 'Save as draft'}
                 </button>
+                <div className="border-t border-gray-100 mt-3 pt-3">
+                  {confirmDelete ? (
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-500 text-center">Delete this draft permanently?</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setConfirmDelete(false)}
+                          className="btn-secondary flex-1 text-xs py-1.5"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={deleteDraft}
+                          disabled={deleting}
+                          className="flex-1 text-xs py-1.5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {deleting ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(true)}
+                      className="w-full text-xs text-red-500 hover:text-red-700 py-1.5"
+                    >
+                      Delete draft
+                    </button>
+                  )}
+                </div>
               </>
             )}
 

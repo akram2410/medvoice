@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, requireRole, AuthRequest } from '../middleware/auth';
 
 export const reportsRouter = Router();
 reportsRouter.use(requireAuth);
+reportsRouter.use(requireRole('ADMIN', 'DOCTOR'));
 
 // GET /api/reports — all reports for this doctor
 reportsRouter.get('/', async (req: AuthRequest, res, next) => {

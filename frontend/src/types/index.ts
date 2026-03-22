@@ -1,3 +1,5 @@
+export type Role = 'ADMIN' | 'DOCTOR' | 'RECEPTIONIST';
+
 export interface Doctor {
   id: string;
   email: string;
@@ -5,6 +7,7 @@ export interface Doctor {
   lastName: string;
   specialty: string;
   licenseNo: string;
+  role: Role;
 }
 
 export interface Patient {

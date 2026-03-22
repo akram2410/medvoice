@@ -1,19 +1,29 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/auth';
+import { Role } from '../../types';
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: '⊞', exact: true },
-  { to: '/patients', label: 'Patients', icon: '👥' },
-  { to: '/visits/new', label: 'New visit', icon: '＋' },
-  { to: '/reports', label: 'Reports', icon: '📄' },
-  { to: '/patients/register', label: 'Register patient', icon: '➕' },
+const ROLE_LABELS: Record<Role, string> = {
+  ADMIN: 'Admin',
+  DOCTOR: 'Doctor',
+  RECEPTIONIST: 'Receptionist',
+};
+
+const navItems: { to: string; label: string; icon: string; exact?: boolean; roles: Role[] }[] = [
+  { to: '/',                  label: 'Dashboard',       icon: '⊞', exact: true, roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST'] },
+  { to: '/patients',          label: 'Patients',         icon: '👥',             roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST'] },
+  { to: '/patients/register', label: 'Register patient', icon: '➕',             roles: ['ADMIN', 'DOCTOR', 'RECEPTIONIST'] },
+  { to: '/visits/new',        label: 'New visit',        icon: '＋',             roles: ['ADMIN', 'DOCTOR'] },
+  { to: '/reports',           label: 'Reports',          icon: '📄',             roles: ['ADMIN', 'DOCTOR'] },
 ];
 
 export function Layout() {
   const { doctor, logout } = useAuth();
   const navigate = useNavigate();
+  const role = doctor?.role;
 
   function handleLogout() { logout(); navigate('/login'); }
+
+  const visibleNav = navItems.filter(item => role && item.roles.includes(role));
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -35,7 +45,7 @@ export function Layout() {
         </div>
 
         <div className="flex-1 px-3 py-3 space-y-0.5">
-          {navItems.map(item => (
+          {visibleNav.map(item => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -60,8 +70,17 @@ export function Layout() {
               {doctor?.firstName[0]}{doctor?.lastName[0]}
             </div>
             <div>
-              <div className="text-white/70 text-xs font-medium">Dr. {doctor?.lastName}</div>
-              <div className="text-white/30 text-xs">{doctor?.specialty}</div>
+              <div className="text-white/70 text-xs font-medium">
+                {role === 'DOCTOR' || role === 'ADMIN' ? 'Dr. ' : ''}{doctor?.lastName}
+              </div>
+              <div className="text-white/30 text-xs flex items-center gap-1.5">
+                <span>{doctor?.specialty}</span>
+                {role && role !== 'DOCTOR' && (
+                  <span className="bg-teal-400/20 text-teal-400 rounded px-1 py-0.5 text-[10px] font-medium">
+                    {ROLE_LABELS[role]}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button onClick={handleLogout} className="text-white/30 text-xs hover:text-white/50 transition-colors">

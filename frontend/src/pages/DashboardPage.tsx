@@ -4,12 +4,21 @@ import { useAuth } from '../store/auth';
 import { api } from '../lib/api';
 import { Visit } from '../types';
 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export function DashboardPage() {
   const { doctor } = useAuth();
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [patientCount, setPatientCount] = useState(0);
 
   useEffect(() => {
     api.getVisits().then(d => setVisits(d.visits)).catch(console.error);
+    api.getPatients().then(d => setPatientCount(d.patients.length)).catch(console.error);
   }, []);
 
   const today = new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -20,16 +29,17 @@ export function DashboardPage() {
   return (
     <div className="p-8">
       <div className="mb-7">
-        <h1 className="text-2xl font-semibold text-gray-900">Good morning, Dr. {doctor?.lastName}</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">{getGreeting()}, Dr. {doctor?.lastName}</h1>
         <p className="text-gray-400 text-sm mt-1">{today}</p>
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-3 gap-4 mb-7">
+      <div className="grid grid-cols-4 gap-4 mb-7">
         {[
           { label: "Today's visits", val: todayVisits.length, sub: 'Completed today' },
           { label: 'Awaiting sign-off', val: unsigned.length, sub: unsigned.length ? 'Action needed' : 'All clear', warn: unsigned.length > 0 },
           { label: 'Total reports', val: visits.length, sub: 'In your records' },
+          { label: 'Patients', val: patientCount, sub: 'Registered' },
         ].map(m => (
           <div key={m.label} className="card p-5">
             <div className="text-3xl font-semibold text-gray-900">{m.val}</div>

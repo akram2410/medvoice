@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, requireRole, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { generateReport } from '../services/reportService';
 
 export const visitsRouter = Router();
 visitsRouter.use(requireAuth);
+visitsRouter.use(requireRole('ADMIN', 'DOCTOR'));
 
 const CreateVisitSchema = z.object({
   patientId: z.string(),
@@ -85,6 +86,22 @@ visitsRouter.patch('/:id/report', async (req: AuthRequest, res, next) => {
     });
 
     res.json({ report });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/visits/:id — delete a draft visit and its report
+visitsRouter.delete('/:id', async (req: AuthRequest, res, next) => {
+  try {
+    const visit = await prisma.visit.findUnique({ where: { id: req.params.id } });
+    if (!visit) throw new AppError(404, 'Visit not found');
+    if (visit.doctorId !== req.doctorId) throw new AppError(403, 'Forbidden');
+    if (visit.status === 'SIGNED') throw new AppError(400, 'Signed visits cannot be deleted');
+
+    await prisma.auditLog.deleteMany({ where: { visitId: visit.id } });
+    await prisma.report.deleteMany({ where: { visitId: visit.id } });
+    await prisma.visit.delete({ where: { id: visit.id } });
+
+    res.json({ success: true });
   } catch (err) { next(err); }
 });
 

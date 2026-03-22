@@ -36,6 +36,10 @@ export const api = {
       body: JSON.stringify(data),
     }),
   me: () => request<{ doctor: any }>('/auth/me'),
+  forgotPassword: (email: string) =>
+    request<{ message: string }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (token: string, password: string) =>
+    request<{ message: string }>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
 
   // Patients
   getPatients: (search?: string) =>
@@ -57,10 +61,15 @@ export const api = {
     request<{ report: any }>(`/visits/${visitId}/report`, { method: 'PATCH', body: JSON.stringify(data) }),
   signReport: (visitId: string) =>
     request<{ visit: any }>(`/visits/${visitId}/sign`, { method: 'POST' }),
+  deleteVisit: (visitId: string) =>
+    request<{ success: boolean }>(`/visits/${visitId}`, { method: 'DELETE' }),
 
   // Reports
   getReports: (params?: { status?: string; search?: string }) => {
-    const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    const clean: Record<string, string> = {};
+    if (params?.status) clean.status = params.status;
+    if (params?.search) clean.search = params.search;
+    const qs = Object.keys(clean).length ? '?' + new URLSearchParams(clean).toString() : '';
     return request<{ reports: any[] }>(`/reports${qs}`);
   },
 };
