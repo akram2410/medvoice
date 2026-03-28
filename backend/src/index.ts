@@ -47,6 +47,6 @@ app.use('/api/reports', reportsRouter);
 // Error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`🏥 MedVoice API running on http://localhost:${PORT}`);
+app.listen(Number(PORT), '0.0.0.0', () => {
+  console.log(`🏥 MedVoice API running on port ${PORT}`);
 });
