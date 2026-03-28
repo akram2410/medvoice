@@ -33,7 +33,8 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 
-// Health check
+// Health checks
+app.get('/', (_req, res) => res.json({ status: 'ok' }));
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
